@@ -1,0 +1,92 @@
+# 所实现的全部指令包括：lw、sw、ori、beq、j、sll、or、xor、add、addi、andi
+# 1.lw：取字。从主存读一个字送至通用寄存器rt。主存字地址的计算方法为：首先将offset符号扩展至32位，然后与rs寄存器的内容相加。
+# 2.sw：把一个字的数据从寄存器存储到存储器中。
+# 3.ori：一个寄存器中的内容与一个立即数相或。
+# 4.beq：条件转移指令，当两个寄存器内容相等时转移发生。
+# 5.j：无条件跳转指令。直接跳转到对应的地址。
+# 6.sll：逻辑左移。
+#     注:逻辑左移=算数左移，右边统一添0 
+#        逻辑右移，左边统一添0 
+#        算数右移，左边添加的数和符号有关
+# 7.or：或运算，两个寄存器中的内容相或。
+# 8.xor：异或运算。两个寄存器中内容相异或。
+# 9.add：相加运算。两个寄存器中内容相加。
+# 10.addi：将立即数imme符号扩展至32位，与通用寄存器rs中的32位整数相加，如果根据补码加法溢出判定规则，结果不溢出，则将该结果存至通用寄存器rt；如果结果溢出， 则产生整数溢出异常，rt的值不变。
+# 11.andi：将立即数imme无符号扩展至32位（高16位补0），并与通用寄存器rs中的32位数按位做“与”运算，结果存至通用寄存器rt。
+
+ori $t7, $zero, 0 # 0与0做或运算，结果自然是0。此时$t7=0
+main: # 标识符：main
+lw $t5, 0xfffb($zero) # $t5: 存储当前状态。即I/O State。之后会拿去进行分支指令。
+ori $t6, $zero, 0	  # $t6=00。此处代表中间按键。
+beq $t5, $t6, WAIT_OP # 当$t5=0，I/O State==0，说明按下了中间的按钮，进入子程序Wait OP
+ori $t6, $zero, 1     # $t6=01。此处代表上键。
+beq $t5, $t6, WAIT_GET_DATA # 若$t5=1，此时进入子程序 WAIT_GET_DATA。
+ori $t6, $zero, 3	  # 11和00相与，$t6=11。此时代表左键。
+beq $t5, $t6, WAIT_CAL_SHOW # 若$t5=$t6，则说明按下了左键，进入分支程序WAIT_CAL_SHOW。
+j WAIT_OP # 跳转至WAIT_OP
+WAIT_GET_DATA:
+ori $t7, $zero, 1  # $7=1
+j	main # 跳转至main
+WAIT_CAL_SHOW: 
+ori $t7, $zero, 3 # $7=11  
+j	main # 跳转至main
+WAIT_OP: # WAIT_OP时在等待操作。此时对比$s1的值而发生跳转
+# $t7=00——》跳转至main
+# $t7=01——》跳转至GET_DATA
+# $t7=11——》跳转至CAL_SHOW:程序执行后半部分
+ori $s1, $zero, 0
+beq $t7, $s1, main   	
+ori $s1, $zero, 1
+beq $t7, $s1, GET_DATA  
+ori $s1, $zero, 3
+beq $t7, $s1, CAL_SHOW  
+j	main
+
+GET_DATA: # 获取数据
+lw		$t1, 	0xfffe($zero)	# $t1存储拨码开关低八位
+lw 	$t0, 	0xffff($zero) 	    # $t2存储拨码开关高八位
+sll 	$t0, 	$t0, 	8       # $t0左移八位
+or 		$t1, 	$t1, 	$t0 	# $t1=$t1^$t0
+ori 	$t7, 	$zero, 	0       # $t7=00
+j	main                        # 跳转至main
+
+CAL_SHOW:
+xor		$t0,	$t0,	$t0	
+add		$t0,	$t1,	$zero	
+xor		$t1,	$t1,	$t1		
+addi	$t1,	$zero,	0x400	
+and		$t1,	$t0,	$t1		
+beq		$t1,	$zero,	NOFST	
+xor		$t2,	$t2,	$t2		
+addi	$t2,	$zero,	0x1000	
+NOFST:							
+xor		$t1,	$t1,	$t1		
+addi	$t1,	$zero,	0x380	
+and		$t1,	$t0,	$t1
+sll		$t1,	$t1,	0x1		
+or		$t2,	$t1,	$t2		
+xor		$t1,	$t1,	$t1		
+addi	$t1,	$zero,	0x7f	
+and		$t1,	$t0,	$t1
+or		$t1,	$t1,	$t2		 
+# 生成c1
+xor		$t2,	$t2,	$t2		
+addi	$s1,	$zero,	0x400
+and		$t2,	$t0,	$s1		
+sll		$t3,	$t2,	0x3		
+sll		$t4,	$t3,	0x1		
+or		$t3,	$t3,	$t4		
+xor		$t1,	$t1,	$t3		
+addi	$s1,	$zero,	0x200
+and		$t2,	$t0,	$s1		
+sll		$t3,	$t2,	0x2		
+sll		$t4,	$t3,	0x3		
+or		$t3,	$t3,	$t4		
+xor		$t1,	$t1,	$t3		
+# 生成c2，c4，c8类似
+xor		$t1,	$t1,	$t3		#c1,c2,c4,c8更新
+
+sw		$t1, 	0xfffc($zero)	#LED显示
+
+ori $t7, $zero, 0 # 清零$t7，跳至main
+j	main
