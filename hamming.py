@@ -1,7 +1,9 @@
 # -*- coding: UTF-8 -*-
+print("按照配偶原则生成汉明码")
+print("请输入11位的2进制数：")
 numbers = input()
 if len(numbers) != 11:
-    print("请输入一个11位二进制数！")
+    print("输入错误，请输入一个11位二进制数！")
 else:
     pass
 print("输入的汉明码原始码为：" + numbers)
