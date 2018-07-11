@@ -24,12 +24,15 @@ beq $t5, $t6, WAIT_GET_DATA # 若$t5=1，此时进入子程序 WAIT_GET_DATA。
 ori $t6, $zero, 3	  # 11和00相与，$t6=11。此时代表左键。
 beq $t5, $t6, WAIT_CAL_SHOW # 若$t5=$t6，则说明按下了左键，进入分支程序WAIT_CAL_SHOW。
 j WAIT_OP # 跳转至WAIT_OP
+
 WAIT_GET_DATA:
 ori $t7, $zero, 1  # $7=1
 j	main # 跳转至main
+
 WAIT_CAL_SHOW: 
 ori $t7, $zero, 3 # $7=11  
 j	main # 跳转至main
+
 WAIT_OP: # WAIT_OP时在等待操作。此时对比$s1的值而发生跳转
 # $t7=00——》跳转至main
 # $t7=01——》跳转至GET_DATA
@@ -58,7 +61,8 @@ addi	$t1,	$zero,	0x400
 and		$t1,	$t0,	$t1		
 beq		$t1,	$zero,	NOFST	
 xor		$t2,	$t2,	$t2		
-addi	$t2,	$zero,	0x1000	
+addi	$t2,	$zero,	0x1000
+
 NOFST:							
 xor		$t1,	$t1,	$t1		
 addi	$t1,	$zero,	0x380	
