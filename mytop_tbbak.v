@@ -25,8 +25,8 @@ module top_tb ();
     	# 300 btn_u = 1;
     	# 400 btn_u = 0;
     	
-    	# 1300 btn_r = 1;
-        # 1400 btn_r = 0;
+    	# 1300 btn_d = 1;
+        # 1400 btn_d = 0;
         
         # 2300 btn_l = 1;
         # 2400 btn_l = 0;
