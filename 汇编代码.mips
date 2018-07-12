@@ -97,7 +97,6 @@ xor		$t1,	$t1,	$t3	  # t1=t1^t3.0011111101111111
 
 xor		$t1,	$t1,	$t3		#c1,c2,c4,c8更新;t1=t1^t3.0111111111111111
 
-
 sw		$t1, 	0xfffc($zero)	#LED显示;输出t1
 
 ori $t7, $zero, 0 # 清零$t7，跳至main

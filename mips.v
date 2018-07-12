@@ -226,7 +226,7 @@ module controller (
     output reg [1 : 0] MemMode,
     // ========= Signal to Datapath =========
     //向数据通路写数据
-    output reg [0 : 0] PCWriteCond, PCWrite,
+    output reg [0 : 0] PCWriteCond, PCWrite,//程序计数器是否启用；是否写入PC
     output reg [1 : 0] PCSource,
     output reg [0 : 0] IorD,
     output reg [0 : 0] MemToReg,
@@ -575,7 +575,7 @@ module datapath (
     wire [27 : 0] jumpAddrFromInstrx4;
     // ==================
     //实例化所有所需的模块
-    PC mips_pc(clk, reset, nextInsAddr, RealPCWrite, currentInsAddr);
+    PC mips_pc(clk, reset, nextInsAddr, RealPCWrite, currentInsAddr);//程序计数器
     mux2 #(16) mips_instr_addr_src(currentInsAddr, aluOut[15:0], IorD, memAddr);
     mux2 #(5) mips_reg_write_addr_src(regAddr2FromInstr, regAddr3FromInstr, RegDst, writeRegAddr);
     regfile mips_reg(clk, reset, RegWrite, regAddr1FromInstr, regAddr2FromInstr, writeRegAddr, writeRegData, dataFromReg1, dataFromReg2);
@@ -586,7 +586,7 @@ module datapath (
     dff mips_dff_a(clk, reset, 1'b1, dataFromReg1, regData1);
     dff mips_dff_b(clk, reset, 1'b1, dataFromReg2, regData2);
     mux4 mips_alu_src1({16'b0, currentInsAddr}, regData1, instruction, 32'b1, ALUSrcA, aluParamData1);
-    signextend imm_extend(immFromInstr, extendedImm);
+    signextend imm_extend(immFromInstr, extendedImm);//符号位扩展
     leftshift2 extended_imm_left_shift2(extendedImm, extendedImmx4);
     mux4 mips_alu_src2(regData2, 32'h4, extendedImm, extendedImmx4, ALUSrcB, aluParamData2);
     leftshift2 #(28) jump_addr_left_shift2({2'b0, jumpAddrFromInstr}, jumpAddrFromInstrx4);
