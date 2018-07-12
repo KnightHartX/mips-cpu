@@ -3,7 +3,7 @@ module top (
     input clk, reset,//输入时钟信号，复位信号
     input BU, BD, BL, BR,//这里是板子中间的四个按键，分别为UP,DOWN,LEFT,RIGHT四个方向的
     input [15  : 0] SW,//输入16个拨码开关信号
-    output [15 : 0] LED//输出16个LED灯
+    output [15 : 0] LED//输出16个LED
     );
     wire [31:0] memData, writeMemData;
     wire MemWrite;
