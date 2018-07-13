@@ -551,9 +551,13 @@ module datapath (
     // ==================
 
     // ========= Instruction slices for output =========
-    wire [4  : 0] regAddr1FromInstr, regAddr2FromInstr, regAddr3FromInstr; // regAddr3FromInstr is for R-type Instruction
+    wire [4  : 0] regAddr1FromInstr, regAddr2FromInstr, regAddr3FromInstr;
+     // regAddr3FromInstr is for R-type Instruction
+     //Rtype指令涉及的三个目标寄存器
     wire [15 : 0] immFromInstr;
+    //指令中位于[15:0]的立即数
     wire [25 : 0] jumpAddrFromInstr;
+    //jump指令要跳转的地址
     //assign相当于一根导线，连接两端
     assign op                = instruction[31:26];
     assign funct             = instruction[5:0];
@@ -577,20 +581,31 @@ module datapath (
     //实例化所有所需的模块
     PC mips_pc(clk, reset, nextInsAddr, RealPCWrite, currentInsAddr);//程序计数器
     mux2 #(16) mips_instr_addr_src(currentInsAddr, aluOut[15:0], IorD, memAddr);
+    //和PC相连的二路选择器
     mux2 #(5) mips_reg_write_addr_src(regAddr2FromInstr, regAddr3FromInstr, RegDst, writeRegAddr);
+    //和寄存器相连的二路选择器(中上)
     regfile mips_reg(clk, reset, RegWrite, regAddr1FromInstr, regAddr2FromInstr, writeRegAddr, writeRegData, dataFromReg1, dataFromReg2);
+    //寄存器
     dff mips_instr_reg(clk, reset, IRWrite, memData, instruction);
     dff mips_aluresult_reg(clk, reset, 1'b1, aluResult, aluOut);
-    dff mips_mem_reg(clk, reset, 1'b1, memData, memDataInReg);
+    dff mips_mem_reg(clk, reset, 1'b1, memData, memDataInReg);  //MDR:存储器数据寄存器
     mux2 mips_reg_write_data_src(aluOut, memDataInReg, MemToReg, writeRegData);
-    dff mips_dff_a(clk, reset, 1'b1, dataFromReg1, regData1);
-    dff mips_dff_b(clk, reset, 1'b1, dataFromReg2, regData2);
+    //和alu相连的二路选择器（数据通路右上角）
+    dff mips_dff_a(clk, reset, 1'b1, dataFromReg1, regData1);//D触发器A
+    dff mips_dff_b(clk, reset, 1'b1, dataFromReg2, regData2);//D触发器B
+    //dff作用：下一周期输出输入的数据
     mux4 mips_alu_src1({16'b0, currentInsAddr}, regData1, instruction, 32'b1, ALUSrcA, aluParamData1);
-    signextend imm_extend(immFromInstr, extendedImm);//符号位扩展
+    //与ALU相连的四路选择器。alu数据来源1，A
+    signextend imm_extend(immFromInstr, extendedImm);
+    //符号位扩展
     leftshift2 extended_imm_left_shift2(extendedImm, extendedImmx4);
+    //左移两位。在符号位扩展后
     mux4 mips_alu_src2(regData2, 32'h4, extendedImm, extendedImmx4, ALUSrcB, aluParamData2);
+    //与alu相连的四路选择器。alu数据来源2，B
     leftshift2 #(28) jump_addr_left_shift2({2'b0, jumpAddrFromInstr}, jumpAddrFromInstrx4);
+    //左移两位。适用于jump指令
     mux4 #(16) next_instr_src(aluResult[15:0], aluOut[15:0], jumpAddrFromInstrx4[15:0], 16'b0, PCSource, nextInsAddr);
+    //四路选择器。得到下一条指令地址（图右上方最上）
 
     //打印一些信息
     always @ ( * ) begin
